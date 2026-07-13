@@ -1,0 +1,12 @@
+# Lean Team profile: safe autonomy with bounded delegation.
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+web_search = "cached"
+
+[agents]
+max_threads = 4
+max_depth = 1
