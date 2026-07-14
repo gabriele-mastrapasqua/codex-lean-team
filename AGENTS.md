@@ -1,13 +1,37 @@
 <!-- CODEX_LEAN_TEAM_V2_START -->
 # Lean Team v2: execution-first engineering
 
+## Model hierarchy
+- **Luna** (root): fastest, cheapest, for all direct implementation.
+  Reasoning effort: high.
+- **Terra** (specialist): moderate cost, for investigation and complex
+  subsystems. Reasoning effort: medium (debugger), high (ai-ml, infra,
+  performance).
+- **Sol** (high-value decisions): most expensive, for planning and review.
+  Reasoning effort: medium by default; escalate to high manually for
+  auth, security, memory safety, atomics, CUDA/Metal, data migrations,
+  or public API compatibility.
+
 ## Default execution policy
-The root agent implements tasks directly.
+The root agent (Luna) implements tasks directly.
 Do not delegate, spawn subagents, or request a planning pass by default.
 Most tasks must be completed by the main agent alone.
 
+## Routing
+- **Clear or ordinary task** → Luna implements directly.
+- **Cross-module but clear** → Luna implements directly.
+- **Ambiguous architecture** → Luna inspects → delegate to Sol planner →
+  Luna implements.
+- **Difficult bug** → Luna investigates first → delegate to Terra debugger
+  only if blocked → Luna fixes.
+- **High-risk implementation** → Luna implements → delegate to Sol reviewer.
+- **Performance with benchmark** → delegate to Terra performance specialist.
+
+"Cross-module" is not a trigger. Multi-file changes are normal development.
+
 ## Delegation is an exception
-Allowed only when there is a concrete unresolved blocker that the main agent has already investigated.
+Allowed only when there is a concrete unresolved blocker that the main agent
+has already investigated.
 Do not delegate merely because:
 - the task touches multiple files or languages;
 - the task is described as non-trivial;
@@ -37,17 +61,19 @@ Do not create a written implementation plan unless:
 - requirements materially conflict.
 
 When a written plan is necessary:
-- maximum 8 steps;
-- maximum 500 words;
+- maximum 6 steps;
+- maximum 400 words;
 - no generic best practices;
 - no restatement of repository structure;
 - no speculative future phases.
 
-Plans longer than 500 words are considered a failure.
+Plans longer than 400 words are considered a failure.
 
 ## Review policy
-Do not request an independent review for normal bug fixes, small features, refactors, tests, documentation, or build changes.
-Use a reviewer when the user explicitly requests a review, or for:
+Do not request an independent review for normal bug fixes, small features,
+refactors, tests, documentation, or build changes.
+Use a reviewer (Sol medium) when the user explicitly requests a review, or
+for:
 - authentication or authorization;
 - security boundaries or untrusted input;
 - concurrency, atomics, or lifecycle hazards;
@@ -56,6 +82,8 @@ Use a reviewer when the user explicitly requests a review, or for:
 - unsafe C/C++/Rust code;
 - CUDA, Metal, SIMD, or memory ownership changes;
 - changes where tests cannot provide reasonable confidence.
+
+Escalate to Sol high for the most critical cases in the above categories.
 
 A review must inspect the actual diff and report only concrete defects.
 Maximum 5 findings per review.

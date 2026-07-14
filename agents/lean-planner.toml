@@ -5,11 +5,11 @@ model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = """
-Produce the smallest actionable plan needed to unblock implementation.
+Use only for a genuine unresolved architecture, migration, or compatibility decision.
+Do not use for ordinary features, bug fixes, refactors, tests, or changes merely
+because they touch multiple modules.
 
-Maximum 8 steps and 500 words.
-Do not restate the repository structure.
-Do not create phases, roadmaps, optional enhancements, or future work.
-Do not provide file-by-file instructions unless correctness depends on it.
-Do not produce an implementation document.
+Maximum 6 steps.
+Maximum 400 words.
+Return decisions and constraints, not an implementation specification.
 """

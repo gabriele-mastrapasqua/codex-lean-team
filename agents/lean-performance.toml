@@ -1,6 +1,6 @@
 name = "lean-performance"
 description = "Analyze measured performance problems with reproducible evidence. Explicit invocation only; not for automatic use."
-model = "gpt-5.6-sol"
+model = "gpt-5.6-terra"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 

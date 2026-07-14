@@ -1,7 +1,7 @@
 name = "lean-debugger"
 description = "Focused root-cause investigator used only after direct inspection or an implementation attempt has not resolved a concrete failure."
 model = "gpt-5.6-terra"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = """

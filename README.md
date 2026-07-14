@@ -16,7 +16,7 @@ Unresolved blocker ───────> One focused specialist investigates
 Critical or requested review ─> Reviewer inspects the actual diff
 ```
 
-The default root agent is **Terra with medium reasoning**. It edits, runs tests, and delivers the result directly. Delegation is an exception, never a ceremony.
+The default root agent is **Luna with high reasoning** — the fastest and most economical model, reserved for high-volume coding work. It edits, runs tests, and delivers the result directly. Delegation is an exception, never a ceremony.
 
 This means routine work usually uses **one agent**, while difficult or high-risk work can still call a stronger specialist when needed.
 
@@ -29,22 +29,22 @@ This means routine work usually uses **one agent**, while difficult or high-risk
 - Specialists are read-only. The root agent keeps ownership of edits and validation.
 - Outputs are deliberately short: focused evidence, not broad reports.
 
-Compared with workflows that automatically spawn several agents, this substantially reduces token use and latency on routine tasks. The exact saving depends on the task and on how often the comparison workflow delegates.
+Using Luna as the default and reserving Terra/Sol for focused specialists substantially reduces token use and cost on routine tasks. Luna costs roughly 60% less than Terra and 80% less than Sol per token. Combined with the single-agent default, this means routine work uses one cheap agent and expensive models run only when they change the outcome.
 
 ## Agents
 
 | Agent | Model | Reasoning | When it runs |
-|---|---|---:|---|
-| **Root developer** | Terra | medium | Always. Implements, edits, and tests. |
+|---|---|---|---:|---|
+| **Root developer** | **Luna** | **high** | Always. Implements, edits, and tests. |
 | `lean-explorer` | Terra | medium | One narrow question about an unfamiliar code path. |
-| `lean-debugger` | Terra | high | A concrete failure remains unresolved after direct investigation. |
+| `lean-debugger` | Terra | medium | A concrete failure remains unresolved after direct investigation. |
 | `lean-planner` | Sol | medium | Architecture decisions, destructive migrations, or conflicting requirements. |
-| `lean-reviewer` | **Sol** | **high** | A review is explicitly requested or the change crosses a critical risk boundary. |
-| `lean-performance` | Sol | high | A reproducible benchmark or profile identifies a hot path. |
+| `lean-reviewer` | **Sol** | **medium** | A review is explicitly requested or the change crosses a critical risk boundary. Use Sol high only for auth, security, memory safety, atomics, CUDA/Metal, data migrations, or public API compatibility. |
+| `lean-performance` | Terra | high | A reproducible benchmark or profile identifies a hot path. |
 | `lean-ai-ml` | Terra | high | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, or MLX. |
 | `lean-infrastructure` | **Terra** | **high** | CI/CD, containers, networking, cloud, observability, or reliability. |
 
-The reviewer intentionally uses the strongest configuration in the team: it runs rarely, but when it does, correctness matters more than marginal token savings. Infrastructure uses Terra high as a balance between careful systems reasoning and cost.
+The reviewer uses Sol medium as a cost-effective default, with explicit escalation to Sol high for the highest-risk categories. Infrastructure keeps Terra high as a balance between systems reasoning and cost.
 
 ## Guardrails against agent sprawl
 
@@ -92,7 +92,7 @@ Restart existing Codex sessions after installing so the new profile, agents, and
 ### Requirements
 
 - A recent Codex CLI with file-backed profiles, subagents, and skills
-- Access to `gpt-5.6-terra` and `gpt-5.6-sol`, or suitable replacements in the TOML files
+- Access to `gpt-5.6-luna`, `gpt-5.6-terra`, and `gpt-5.6-sol`, or suitable replacements in the TOML files
 - Bash on macOS or Linux
 
 ## What gets installed
