@@ -7,26 +7,10 @@ Built on native Codex primitives: [custom subagents](https://developers.openai.c
 
 ---
 
-## The problem
+**The root agent (Terra medium) implements tasks directly by default.**  
+Subagents are invoked only when there is a concrete unresolved blocker — no automatic planner, no automatic reviewer, no specialist chains.
 
-Codex's default behavior and most public multi-agent setups spawn a **planner + reviewer + specialist chain** for almost every task. Each subagent reloads the full repository context. A single small fix can cost 3–8x the tokens of a direct implementation.
-
-Result: your weekly Plus allowance evaporates on ceremony, not on code.
-
-## The fix
-
-**Default: the root agent (Terra medium) implements directly.**  
-**Subagents are an exception**, invoked only when there is a concrete unresolved blocker.
-
-| Before (typical multi-agent) | After (Lean Team v2) |
-|---|---|
-| Planner → Developer → Reviewer (3–4× cost) | Developer alone (~1× cost) |
-| Planner produces 2000-line plans | Plans capped at 8 steps / 500 words |
-| Reviewer called for every "non-trivial" change | Reviewer only for security, concurrency, unsafe code |
-| xhigh effort on specialist agents | xhigh / xmax never automatic |
-| max_threads = 4–6 | max_threads = 2 |
-
-**Estimated saving**: 60–80% fewer tokens, 40–70% less latency on routine tasks.
+Estimated saving vs typical multi-agent setups: 60–80% fewer tokens, 40–70% less latency on routine tasks.
 
 ---
 
@@ -60,19 +44,6 @@ max_depth = 1
 - Most tasks: **zero subagents**, zero planning, zero review.
 
 ---
-
-## What this means for a coding session
-
-| Scenario | Before (typical) | After (Lean v2) |
-|---|---|---|
-| Fix a localized bug | Planner → Dev → Reviewer (~3× tokens) | **Dev directly** (~1×) |
-| Add a small feature | Planner (2000-line plan) → Dev → Reviewer | **Dev directly** (~1×) |
-| Refactor a module | Planner (architect) → Dev → Reviewer | **Dev directly** (~1×) |
-| Debug a race condition | Dev tries → Debugger (full re-read) → Dev → Reviewer | **Dev tries → Debugger** (~2×, only if needed) |
-| Architecture decision | Planner Sol high → Dev → Reviewer | **Planner Sol medium** → Dev (~1.5×, compact plan) |
-| Security-sensitive diff | Dev → Reviewer | **Dev → Reviewer** (~2×, but this is justified) |
-
-On a typical weekly Plus budget, you get **3–5× more actual implementations** before hitting limits.
 
 ---
 
