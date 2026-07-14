@@ -37,11 +37,24 @@ for dir in "$SCRIPT_DIR"/skills/*; do
 done
 
 AGENTS_FILE="$CODEX_HOME/AGENTS.md"
-START='<!-- CODEX_LEAN_TEAM_V1_START -->'
-END='<!-- CODEX_LEAN_TEAM_V1_END -->'
+# Remove v1 section if present
+START_V1='<!-- CODEX_LEAN_TEAM_V1_START -->'
+END_V1='<!-- CODEX_LEAN_TEAM_V1_END -->'
+START_V2='<!-- CODEX_LEAN_TEAM_V2_START -->'
+END_V2='<!-- CODEX_LEAN_TEAM_V2_END -->'
 
-if [ -f "$AGENTS_FILE" ] && grep -qF "$START" "$AGENTS_FILE"; then
-  awk -v start="$START" -v end="$END" '
+if [ -f "$AGENTS_FILE" ] && grep -qF "$START_V1" "$AGENTS_FILE"; then
+  awk -v start="$START_V1" -v end="$END_V1" '
+    $0 == start {skip=1}
+    !skip {print}
+    $0 == end {skip=0}
+  ' "$AGENTS_FILE" > "$AGENTS_FILE.tmp"
+  mv "$AGENTS_FILE.tmp" "$AGENTS_FILE"
+fi
+
+# Remove v2 section if present
+if [ -f "$AGENTS_FILE" ] && grep -qF "$START_V2" "$AGENTS_FILE"; then
+  awk -v start="$START_V2" -v end="$END_V2" '
     $0 == start {skip=1}
     !skip {print}
     $0 == end {skip=0}
@@ -61,7 +74,7 @@ exec codex --profile lean-team "$@"
 EOF
 chmod +x "$BIN_HOME/codex-team"
 
-echo "Codex Lean Team v1 installed."
+echo "Codex Lean Team v2 installed."
 echo "Profile: $CODEX_HOME/lean-team.config.toml"
 echo "Launcher: $BIN_HOME/codex-team"
 echo "Backup:   $BACKUP_DIR"

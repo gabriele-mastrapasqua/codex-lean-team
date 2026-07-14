@@ -1,5 +1,5 @@
-# Lean Team profile: safe autonomy with bounded delegation.
-model = "gpt-5.6-sol"
+# Lean Team v2: execution-first, delegation as exception.
+model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
 
 sandbox_mode = "workspace-write"
@@ -8,5 +8,5 @@ approvals_reviewer = "auto_review"
 web_search = "cached"
 
 [agents]
-max_threads = 4
+max_threads = 2
 max_depth = 1

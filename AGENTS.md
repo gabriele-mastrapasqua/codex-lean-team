@@ -1,28 +1,74 @@
-<!-- CODEX_LEAN_TEAM_V1_START -->
-# Lean adaptive engineering workflow
+<!-- CODEX_LEAN_TEAM_V2_START -->
+# Lean Team v2: execution-first engineering
 
-Work directly for small, clear, localized tasks.
+## Default execution policy
+The root agent implements tasks directly.
+Do not delegate, spawn subagents, or request a planning pass by default.
+Most tasks must be completed by the main agent alone.
 
-Delegate only when delegation is likely to improve correctness:
-- Use `lean-planner` for ambiguous, architectural, cross-module, or high-blast-radius work.
-- Use `lean-reviewer` after non-trivial changes, public API changes, concurrency, migrations, security-sensitive code, or unclear bug fixes.
-- Use `lean-performance` only for measured performance work, native hot paths, SIMD/GPU code, or benchmark-sensitive changes.
-- Use `lean-ai-ml` only for model inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, MLX, llama.cpp, or vLLM.
-- Use `lean-infrastructure` only for deployment, CI/CD, containers, networking, cloud, observability, or reliability.
+## Delegation is an exception
+Allowed only when there is a concrete unresolved blocker that the main agent has already investigated.
+Do not delegate merely because:
+- the task touches multiple files or languages;
+- the task is described as non-trivial;
+- a specialist might theoretically provide useful input;
+- an additional review could improve confidence.
 
-Do not invoke multiple agents for trivial edits.
-Do not delegate the same analysis twice.
-Prefer one focused specialist over broad fan-out.
-Keep `max_depth = 1`; subagents must not recursively create teams.
+Before delegating, the main agent must be able to state:
+1. the specific unresolved question;
+2. why direct inspection or testing was insufficient;
+3. the exact output required from the subagent.
 
-Before editing:
+## Agent budget
+Default subagent budget: 0.
+Ordinary task maximum: 1 subagent.
+High-risk task maximum: 2 subagents.
+Using more than 2 subagents requires explicit user instruction.
+
+Never spawn subagents in parallel for alternative opinions.
+Never ask two agents the same question.
+Never chain planner -> explorer -> worker -> reviewer.
+
+## Planning policy
+Do not create a written implementation plan unless:
+- the user explicitly requests one;
+- the task requires an architectural decision with multiple viable options;
+- the task involves a destructive migration or difficult rollback;
+- requirements materially conflict.
+
+When a written plan is necessary:
+- maximum 8 steps;
+- maximum 500 words;
+- no generic best practices;
+- no restatement of repository structure;
+- no speculative future phases.
+
+Plans longer than 500 words are considered a failure.
+
+## Review policy
+Do not request an independent review for normal bug fixes, small features, refactors, tests, documentation, or build changes.
+Use a reviewer only for:
+- authentication or authorization;
+- security boundaries or untrusted input;
+- concurrency, atomics, or lifecycle hazards;
+- persistent data migrations;
+- public API compatibility;
+- unsafe C/C++/Rust code;
+- CUDA, Metal, SIMD, or memory ownership changes;
+- changes where tests cannot provide reasonable confidence.
+
+A review must inspect the actual diff and report only concrete defects.
+Maximum 5 findings per review.
+No summary, praise, style commentary, or generic recommendations.
+
+## Before editing
 1. Detect the repository languages, frameworks, build systems, and conventions.
 2. Read the nearest relevant code and project instructions.
 3. Use ecosystem-native patterns; do not force C-style solutions onto managed languages.
 4. Preserve backward compatibility unless the task explicitly changes it.
 
-Before completion:
+## Before completion
 1. Run the smallest relevant validation set.
 2. State exactly what was tested and what was not.
-3. For non-trivial work, request one focused review pass.
-<!-- CODEX_LEAN_TEAM_V1_END -->
+3. Prefer fixing and testing over describing procedure.
+<!-- CODEX_LEAN_TEAM_V2_END -->

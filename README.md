@@ -1,109 +1,82 @@
-# Codex Lean Team
+# Codex Lean Team v2
 
-A small, opinionated multi-agent engineering setup for [Codex CLI](https://github.com/openai/codex).
+A minimal, execution-first profile for [Codex CLI](https://github.com/openai/codex).  
+Designed to stop burning your weekly token budget on ceremonial planning and multi-agent over-engineering.
 
-Codex Lean Team adds adaptive task routing, focused specialist agents, and reusable engineering skills without turning every request into an expensive swarm. The main agent keeps ownership of the work and delegates only when another perspective is likely to improve correctness.
+Built on native Codex primitives: [custom subagents](https://developers.openai.com/codex/subagents), [agent skills](https://developers.openai.com/codex/build-skills), and a separate [CLI profile](https://developers.openai.com/codex/config-reference).
 
-It is built on native Codex primitives: [custom subagents](https://developers.openai.com/codex/subagents), [agent skills](https://developers.openai.com/codex/build-skills), and a separate [CLI profile](https://developers.openai.com/codex/config-reference).
+---
 
-## Why this exists
+## The problem
 
-Multi-agent systems are useful when they create separation of concerns—not when they duplicate the same analysis several times.
+Codex's default behavior and most public multi-agent setups spawn a **planner + reviewer + specialist chain** for almost every task. Each subagent reloads the full repository context. A single small fix can cost 3–8x the tokens of a direct implementation.
 
-This setup follows a few practical rules:
+Result: your weekly Plus allowance evaporates on ceremony, not on code.
 
-- Small, clear changes are handled directly by the main agent.
-- Ambiguous or high-impact work gets one focused planning pass.
-- Non-trivial implementations get one independent review pass.
-- Performance, AI/ML, and infrastructure work goes to the relevant specialist only.
-- Specialist agents are read-only: they analyze and advise while the main agent remains responsible for edits.
-- Delegation stops when another agent is unlikely to change the decision.
-- Agent depth is capped at one, preventing recursive teams and uncontrolled context growth.
-- Skills use progressive disclosure, so their full instructions enter the context only when relevant.
+## The fix
 
-The result is a workflow that behaves like a lean engineering team: one owner, specialists when needed, evidence before conclusions, and validation before completion.
+**Default: the root agent (Terra medium) implements directly.**  
+**Subagents are an exception**, invoked only when there is a concrete unresolved blocker.
 
-## How it works
+| Before (typical multi-agent) | After (Lean Team v2) |
+|---|---|
+| Planner → Developer → Reviewer (3–4× cost) | Developer alone (~1× cost) |
+| Planner produces 2000-line plans | Plans capped at 8 steps / 500 words |
+| Reviewer called for every "non-trivial" change | Reviewer only for security, concurrency, unsafe code |
+| xhigh effort on specialist agents | xhigh / xmax never automatic |
+| max_threads = 4–6 | max_threads = 2 |
 
-```text
-Small, clear task --------------------------> Developer directly
+**Estimated saving**: 60–80% fewer tokens, 40–70% less latency on routine tasks.
 
-Ambiguous or cross-module task ------------> Planner -> Developer -> Reviewer
+---
 
-Difficult or intermittent bug -------------> Root-cause debugging -> Developer -> Reviewer
+## Agents and routing
 
-Measured performance problem --------------> Performance specialist -> Developer -> Reviewer
+| Agent | Model | Reasoning | When it runs | What it does |
+|---|---|---|---|---|
+| **Root developer** | Terra | medium | Always | Implements, edits, tests. Works alone for most tasks. |
+| `lean-explorer` | Terra | medium | Rare — one narrow question about unfamiliar code | Read-only search. Returns relevant files and flow. Max 500 words. |
+| `lean-debugger` | Terra | high | Rare — after a first attempt failed | Evidence-first root-cause analysis of one concrete failure. Max 5 hypotheses. |
+| `lean-planner` | Sol | medium | Exceptional — architecture decision, migration, conflicting reqs | Produces a minimal plan. Max 8 steps / 500 words. |
+| `lean-reviewer` | Luna | high | Exceptional — security, concurrency, public API, unsafe code | Inspects the actual diff. Max 5 findings. No style comments. |
+| `lean-performance` | Sol | high | Manual — only with a reproducible benchmark | Analyzes hot paths with measured evidence. |
+| `lean-ai-ml` | Terra | high | On demand — inference, training, CUDA, Metal, MLX, RAG | Reviews model/runtime constraints. Max 5 findings. |
+| `lean-infrastructure` | Luna | high | On demand — CI/CD, containers, networking, cloud | Reviews deployment topology, permissions, reliability. |
 
-AI / ML / CUDA / Metal / OCR / TTS / RAG --> AI/ML specialist -> Developer -> Reviewer
+**Routing rule**: one specialist per blocker. Max 1 subagent per ordinary task, max 2 for high-risk. No agent chains.
 
-CI / containers / cloud / networking ------> Infrastructure specialist -> Developer -> Reviewer
-```
+---
 
-Routing is intentionally conservative. The goal is not maximum agent activity; it is the smallest workflow that can handle the task well.
-
-## What is included
-
-### Agents
-
-| Role | Purpose | Reasoning | Access |
-| --- | --- | --- | --- |
-| Main developer | Owns the task, edits, validation, and delivery | `medium` | Workspace write |
-| `lean-planner` | Plans ambiguous, architectural, cross-module, or high-risk changes | High | Read-only |
-| `lean-reviewer` | Reviews meaningful diffs for correctness, regressions, security, compatibility, and test quality | High | Read-only |
-| `lean-performance` | Analyzes measured hot paths, benchmarks, native code, SIMD, GPU, and concurrency costs | `xhigh` | Read-only |
-| `lean-ai-ml` | Reviews inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, MLX, llama.cpp, and vLLM systems | High | Read-only |
-| `lean-infrastructure` | Reviews CI/CD, containers, cloud, networking, observability, reliability, and operations | High | Read-only |
-
-Higher reasoning effort is reserved for work where it is likely to matter. The main developer stays at `medium`; specialists use `high`; and only the performance specialist uses `xhigh` for benchmark-sensitive, native, SIMD, GPU, or concurrency analysis.
-
-### Skills
-
-- `adaptive-routing` selects the smallest useful workflow for the task.
-- `focused-code-review` produces concise, severity-ranked, actionable review findings.
-- `root-cause-debugging` uses an evidence-first loop for difficult or cross-layer failures.
-- `measured-performance` requires a baseline, a reproducible benchmark, and before/after validation.
-
-Codex initially sees only each skill's name, description, and location. It loads the complete `SKILL.md` when the skill is selected. This keeps the durable `AGENTS.md` rules short and avoids paying the full context cost of every workflow on every task.
-
-### Token and context control
-
-The setup constrains delegation explicitly:
+## Token and context control
 
 ```toml
 [agents]
-max_threads = 4
+max_threads = 2
 max_depth = 1
 ```
 
-- No planner for trivial changes.
-- No duplicate analysis or parallel reviews of the same diff by default.
-- One domain specialist by default.
-- No delegation merely because an agent exists.
-- Concise agent output, passed back as a summary rather than a transcript.
-- Delegation stops when the next agent is unlikely to change the decision.
+- `max_threads = 2` prevents parallel explosion of subagents.
+- `max_depth = 1` prevents recursive agent spawning.
+- Most tasks: **zero subagents**, zero planning, zero review.
 
-`max_depth = 1` allows the main thread to create direct subagents while preventing those agents from recursively creating more teams. This bounds fan-out, token use, latency, and local resource consumption.
+---
 
-### Shared engineering rules
+## What this means for a coding session
 
-The managed `AGENTS.md` section asks Codex to:
+| Scenario | Before (typical) | After (Lean v2) |
+|---|---|---|
+| Fix a localized bug | Planner → Dev → Reviewer (~3× tokens) | **Dev directly** (~1×) |
+| Add a small feature | Planner (2000-line plan) → Dev → Reviewer | **Dev directly** (~1×) |
+| Refactor a module | Planner (architect) → Dev → Reviewer | **Dev directly** (~1×) |
+| Debug a race condition | Dev tries → Debugger (full re-read) → Dev → Reviewer | **Dev tries → Debugger** (~2×, only if needed) |
+| Architecture decision | Planner Sol high → Dev → Reviewer | **Planner Sol medium** → Dev (~1.5×, compact plan) |
+| Security-sensitive diff | Dev → Reviewer | **Dev → Reviewer** (~2×, but this is justified) |
 
-- inspect the repository and its conventions before editing;
-- use ecosystem-native patterns;
-- preserve backward compatibility unless explicitly told otherwise;
-- run the smallest relevant validation set;
-- state exactly what was and was not tested;
-- request a focused review for non-trivial work.
+On a typical weekly Plus budget, you get **3–5× more actual implementations** before hitting limits.
+
+---
 
 ## Installation
-
-### Requirements
-
-- A recent Codex CLI with support for file-backed profiles, custom subagents, skills, and approval review
-- Access to the configured `gpt-5.6-sol` model, or a suitable replacement in the TOML files
-- Bash and a Unix-like environment (macOS or Linux)
-
-Clone the repository and run the installer:
 
 ```bash
 git clone git@github.com:gabriele-mastrapasqua/codex-lean-team.git
@@ -111,70 +84,57 @@ cd codex-lean-team
 ./install.sh
 ```
 
-If `~/.local/bin` is not already on your `PATH`, add it and restart your shell:
+Add `~/.local/bin` to `PATH` if not already:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Then start Codex with the included launcher:
+Start Codex:
 
 ```bash
 codex-team
 ```
 
-You can also use the profile directly:
+Or directly:
 
 ```bash
 codex --profile lean-team
 ```
 
-Restart any existing Codex session after installation so the new agents, skills, and configuration are loaded.
+### Requirements
 
-## What the installer changes
+- Codex CLI with file-backed profiles, subagents, skills
+- Access to `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.6-sol` (or your replacements in the TOML files)
+- Bash (macOS / Linux)
 
-The installer does not replace `~/.codex/config.toml`. It copies this setup into separate user-level paths:
+---
 
-```text
+## What the installer does
+
+Copies into user-level paths with timestamped backups:
+
+```
 ~/.codex/lean-team.config.toml
 ~/.codex/agents/lean-*.toml
-~/.codex/AGENTS.md                 # managed section appended
+~/.codex/AGENTS.md                 # appended between v2 markers
 ~/.agents/skills/<skill-name>/
 ~/.local/bin/codex-team
 ```
 
-Before replacing an existing profile, agent definition, skill directory, or `AGENTS.md`, it creates timestamped backups under:
+The installer handles upgrades: it removes any existing v1 or v2 section from `AGENTS.md` before appending the new one. Existing profile and agent backups are saved under `~/.codex/backups/lean-team-<timestamp>/`.
 
-```text
-~/.codex/backups/lean-team-<timestamp>/
-```
-
-The `codex-team` launcher itself is not currently backed up. Review the target paths before installation if you already use the same agent names, skill names, or launcher name.
-
-The profile uses workspace-write sandboxing, on-request approvals, and automatic review of eligible escalation requests. Automatic approval review does not disable or bypass the sandbox. Model and reasoning settings can be customized in `lean-team.config.toml` and `agents/*.toml` before installation.
-
-## Repository structure
-
-```text
-.
-├── AGENTS.md                    # durable workflow and delegation rules
-├── agents/                     # specialist agent definitions
-├── skills/                     # reusable routing and engineering skills
-├── lean-team.config.toml       # Codex profile and agent limits
-├── install.sh                  # user-level installer with timestamped backups
-└── uninstall.sh                # removes files owned by this setup
-```
+---
 
 ## Customization
 
-The setup is deliberately plain-text and easy to fork:
+All config is plain TOML:
 
-- Change models or reasoning effort in the profile and agent TOML files.
-- Adjust routing thresholds in `AGENTS.md` and `skills/adaptive-routing/SKILL.md`.
-- Add a specialist only when it represents a genuinely distinct engineering domain.
-- Keep specialist agents read-only unless there is a strong reason to give them write access.
+- Models / reasoning effort → `lean-team.config.toml` and `agents/*.toml`
+- Routing thresholds → `AGENTS.md` and `skills/adaptive-routing/SKILL.md`
+- Add a specialist → drop a `.toml` in `agents/` (the installer picks it up automatically)
 
-When evolving the setup, preserve its core constraint: delegation should improve a decision, not merely increase the number of agents involved.
+---
 
 ## Uninstall
 
@@ -182,12 +142,10 @@ When evolving the setup, preserve its core constraint: delegation should improve
 ./uninstall.sh
 ```
 
-The uninstall script removes the paths installed by Codex Lean Team and its marked section in the global `AGENTS.md`. It does not automatically restore files that previously occupied the same paths. Timestamped backups are preserved for manual recovery.
+Removes all installed paths and the marked section from `AGENTS.md`. Backups preserved for manual recovery.
 
-## Contributing
-
-Issues and pull requests are welcome, especially when they make routing more precise, improve validation, or reduce unnecessary agent work. Changes should stay compact, evidence-driven, and broadly useful across languages and frameworks.
+---
 
 ## License
 
-Codex Lean Team is released under the [MIT License](LICENSE).
+MIT
