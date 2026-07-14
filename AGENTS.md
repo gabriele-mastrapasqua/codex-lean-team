@@ -47,7 +47,7 @@ Plans longer than 500 words are considered a failure.
 
 ## Review policy
 Do not request an independent review for normal bug fixes, small features, refactors, tests, documentation, or build changes.
-Use a reviewer only for:
+Use a reviewer when the user explicitly requests a review, or for:
 - authentication or authorization;
 - security boundaries or untrusted input;
 - concurrency, atomics, or lifecycle hazards;

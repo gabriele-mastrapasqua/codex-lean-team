@@ -1,37 +1,52 @@
 # Codex Lean Team v2
 
-A minimal, execution-first profile for [Codex CLI](https://github.com/openai/codex).  
-Designed to stop burning your weekly token budget on ceremonial planning and multi-agent over-engineering.
+An execution-first setup for [Codex CLI](https://github.com/openai/codex) that keeps routine coding fast and reserves expensive reasoning for the moments where it changes the outcome.
 
-Built on native Codex primitives: [custom subagents](https://developers.openai.com/codex/subagents), [agent skills](https://developers.openai.com/codex/build-skills), and a separate [CLI profile](https://developers.openai.com/codex/config-reference).
+It uses native Codex primitives: [custom subagents](https://developers.openai.com/codex/subagents), [agent skills](https://developers.openai.com/codex/build-skills), and a separate [CLI profile](https://developers.openai.com/codex/config-reference).
 
----
+## The idea
 
-**The root agent (Terra medium) implements tasks directly by default.**  
-Subagents are invoked only when there is a concrete unresolved blocker — no automatic planner, no automatic reviewer, no specialist chains.
+Most coding tasks do not need a planner, a reviewer, and a chain of specialists. Every extra agent reloads context, uses tokens, and adds latency.
 
-Estimated saving vs typical multi-agent setups: 60–80% fewer tokens, 40–70% less latency on routine tasks.
+Lean Team gives one agent ownership of the task:
 
----
+```text
+Clear task ────────────────> Root developer implements and tests
+Unresolved blocker ───────> One focused specialist investigates
+Critical or requested review ─> Reviewer inspects the actual diff
+```
 
-## Agents and routing
+The default root agent is **Terra with medium reasoning**. It edits, runs tests, and delivers the result directly. Delegation is an exception, never a ceremony.
 
-| Agent | Model | Reasoning | When it runs | What it does |
-|---|---|---|---|---|
-| **Root developer** | Terra | medium | Always | Implements, edits, tests. Works alone for most tasks. |
-| `lean-explorer` | Terra | medium | Rare — one narrow question about unfamiliar code | Read-only search. Returns relevant files and flow. Max 500 words. |
-| `lean-debugger` | Terra | high | Rare — after a first attempt failed | Evidence-first root-cause analysis of one concrete failure. Max 5 hypotheses. |
-| `lean-planner` | Sol | medium | Exceptional — architecture decision, migration, conflicting reqs | Produces a minimal plan. Max 8 steps / 500 words. |
-| `lean-reviewer` | Luna | high | Exceptional — security, concurrency, public API, unsafe code | Inspects the actual diff. Max 5 findings. No style comments. |
-| `lean-performance` | Sol | high | Manual — only with a reproducible benchmark | Analyzes hot paths with measured evidence. |
-| `lean-ai-ml` | Terra | high | On demand — inference, training, CUDA, Metal, MLX, RAG | Reviews model/runtime constraints. Max 5 findings. |
-| `lean-infrastructure` | Luna | high | On demand — CI/CD, containers, networking, cloud | Reviews deployment topology, permissions, reliability. |
+This means routine work usually uses **one agent**, while difficult or high-risk work can still call a stronger specialist when needed.
 
-**Routing rule**: one specialist per blocker. Max 1 subagent per ordinary task, max 2 for high-risk. No agent chains.
+## What happens in practice
 
----
+- Small fixes, features, refactors, tests, documentation, and build changes are handled directly.
+- A subagent is used only after the root agent finds a concrete unresolved question.
+- At most one specialist handles a given blocker; agents do not form chains.
+- The reviewer runs only for security, concurrency, migrations, public APIs, unsafe code, other high-risk changes, **or when the user explicitly asks for a review**.
+- Specialists are read-only. The root agent keeps ownership of edits and validation.
+- Outputs are deliberately short: focused evidence, not broad reports.
 
-## Token and context control
+Compared with workflows that automatically spawn several agents, this substantially reduces token use and latency on routine tasks. The exact saving depends on the task and on how often the comparison workflow delegates.
+
+## Agents
+
+| Agent | Model | Reasoning | When it runs |
+|---|---|---:|---|
+| **Root developer** | Terra | medium | Always. Implements, edits, and tests. |
+| `lean-explorer` | Terra | medium | One narrow question about an unfamiliar code path. |
+| `lean-debugger` | Terra | high | A concrete failure remains unresolved after direct investigation. |
+| `lean-planner` | Sol | medium | Architecture decisions, destructive migrations, or conflicting requirements. |
+| `lean-reviewer` | **Sol** | **high** | A review is explicitly requested or the change crosses a critical risk boundary. |
+| `lean-performance` | Sol | high | A reproducible benchmark or profile identifies a hot path. |
+| `lean-ai-ml` | Terra | high | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, or MLX. |
+| `lean-infrastructure` | **Terra** | **high** | CI/CD, containers, networking, cloud, observability, or reliability. |
+
+The reviewer intentionally uses the strongest configuration in the team: it runs rarely, but when it does, correctness matters more than marginal token savings. Infrastructure uses Terra high as a balance between careful systems reasoning and cost.
+
+## Guardrails against agent sprawl
 
 ```toml
 [agents]
@@ -39,13 +54,12 @@ max_threads = 2
 max_depth = 1
 ```
 
-- `max_threads = 2` prevents parallel explosion of subagents.
-- `max_depth = 1` prevents recursive agent spawning.
-- Most tasks: **zero subagents**, zero planning, zero review.
-
----
-
----
+- The default subagent budget is zero.
+- Ordinary tasks may use at most one subagent.
+- High-risk tasks may use at most two, only for distinct blockers.
+- `max_threads = 2` limits concurrent agent threads.
+- `max_depth = 1` prevents subagents from recursively creating teams.
+- Planner → explorer → worker → reviewer chains are explicitly forbidden.
 
 ## Installation
 
@@ -55,57 +69,55 @@ cd codex-lean-team
 ./install.sh
 ```
 
-Add `~/.local/bin` to `PATH` if not already:
+Add `~/.local/bin` to `PATH` if needed:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Start Codex:
+Then start the dedicated profile:
 
 ```bash
 codex-team
 ```
 
-Or directly:
+Or launch it directly:
 
 ```bash
 codex --profile lean-team
 ```
 
+Restart existing Codex sessions after installing so the new profile, agents, and skills are loaded.
+
 ### Requirements
 
-- Codex CLI with file-backed profiles, subagents, skills
-- Access to `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.6-sol` (or your replacements in the TOML files)
-- Bash (macOS / Linux)
+- A recent Codex CLI with file-backed profiles, subagents, and skills
+- Access to `gpt-5.6-terra` and `gpt-5.6-sol`, or suitable replacements in the TOML files
+- Bash on macOS or Linux
 
----
+## What gets installed
 
-## What the installer does
+The installer copies the setup to user-level paths and creates timestamped backups before replacing existing files:
 
-Copies into user-level paths with timestamped backups:
-
-```
+```text
 ~/.codex/lean-team.config.toml
 ~/.codex/agents/lean-*.toml
-~/.codex/AGENTS.md                 # appended between v2 markers
+~/.codex/AGENTS.md
 ~/.agents/skills/<skill-name>/
 ~/.local/bin/codex-team
 ```
 
-The installer handles upgrades: it removes any existing v1 or v2 section from `AGENTS.md` before appending the new one. Existing profile and agent backups are saved under `~/.codex/backups/lean-team-<timestamp>/`.
-
----
+Backups are stored under `~/.codex/backups/lean-team-<timestamp>/`. Existing Lean Team v1 or v2 sections in `AGENTS.md` are replaced without removing unrelated user instructions.
 
 ## Customization
 
-All config is plain TOML:
+Everything is plain text:
 
-- Models / reasoning effort → `lean-team.config.toml` and `agents/*.toml`
-- Routing thresholds → `AGENTS.md` and `skills/adaptive-routing/SKILL.md`
-- Add a specialist → drop a `.toml` in `agents/` (the installer picks it up automatically)
+- Change models or reasoning effort in `lean-team.config.toml` and `agents/*.toml`.
+- Adjust routing thresholds in `AGENTS.md` and `skills/adaptive-routing/SKILL.md`.
+- Add a specialist by placing another TOML file in `agents/`; the installer discovers it automatically.
 
----
+The core rule is simple: delegate only when another agent is likely to improve the decision.
 
 ## Uninstall
 
@@ -113,10 +125,8 @@ All config is plain TOML:
 ./uninstall.sh
 ```
 
-Removes all installed paths and the marked section from `AGENTS.md`. Backups preserved for manual recovery.
-
----
+The uninstall script removes files owned by Lean Team. Timestamped backups are preserved for manual recovery.
 
 ## License
 
-MIT
+[MIT](LICENSE)

@@ -1,6 +1,6 @@
 name = "lean-reviewer"
-description = "Risk-based reviewer for security, concurrency, migrations, public API, unsafe code, or large diffs. Not for routine changes."
-model = "gpt-5.6-luna"
+description = "Focused reviewer used when explicitly requested or for security, concurrency, migrations, public API, unsafe code, or large diffs."
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 

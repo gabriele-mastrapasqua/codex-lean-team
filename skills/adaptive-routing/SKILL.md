@@ -35,7 +35,7 @@ Use at most one specialist per concrete blocker:
 - **lean-planner**: only for ambiguous requirements, architectural decisions, destructive migrations, or conflicting requirements.
 - **lean-explorer**: one narrow question about an unfamiliar code path.
 - **lean-debugger**: root-cause investigation after direct inspection failed.
-- **lean-reviewer**: only for security, concurrency, migrations, public API, unsafe code, or large diffs.
+- **lean-reviewer**: when the user explicitly requests a review, or for security, concurrency, migrations, public API, unsafe code, or large diffs.
 - **lean-performance**: only with a reproducible benchmark or profile.
 - **lean-ai-ml**: model inference, training, quantization, RAG, CUDA, Metal, MLX.
 - **lean-infrastructure**: deployment, CI/CD, containers, networking, cloud.
