@@ -34,17 +34,17 @@ Using Luna as the default and reserving Terra/Sol for focused specialists substa
 ## Agents
 
 | Agent | Model | Reasoning | When it runs |
-|---|---|---|---:|---|
-| **Root developer** | **Luna** | **high** | Always. Implements, edits, and tests. |
+|-------|-------|:---------:|---|
+| **Root developer** | Luna | high | Always. Implements, edits, and tests. |
 | `lean-explorer` | Terra | medium | One narrow question about an unfamiliar code path. |
-| `lean-debugger` | Terra | medium | A concrete failure remains unresolved after direct investigation. |
-| `lean-planner` | Sol | medium | Architecture decisions, destructive migrations, or conflicting requirements. |
-| `lean-reviewer` | **Sol** | **medium** | A review is explicitly requested or the change crosses a critical risk boundary. Use Sol high only for auth, security, memory safety, atomics, CUDA/Metal, data migrations, or public API compatibility. |
-| `lean-performance` | Terra | high | A reproducible benchmark or profile identifies a hot path. |
-| `lean-ai-ml` | Terra | high | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, or MLX. |
-| `lean-infrastructure` | **Terra** | **high** | CI/CD, containers, networking, cloud, observability, or reliability. |
+| `lean-debugger` | Terra | medium | Concrete failure unresolved after direct investigation. |
+| `lean-planner` | Sol | medium | Architecture, migrations, or conflicting requirements. |
+| `lean-reviewer` | Sol | medium | Explicit request, or security/concurrency/API/unsafe code. |
+| `lean-performance` | Terra | high | Reproducible benchmark or profile. |
+| `lean-ai-ml` | Terra | high | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, MLX. |
+| `lean-infrastructure` | Terra | high | CI/CD, containers, networking, cloud, observability, reliability. |
 
-The reviewer uses Sol medium as a cost-effective default, with explicit escalation to Sol high for the highest-risk categories. Infrastructure keeps Terra high as a balance between systems reasoning and cost.
+Use Sol high manually for auth, security, memory safety, atomics, CUDA/Metal, data migrations, or public API compatibility.
 
 ## Guardrails against agent sprawl
 
