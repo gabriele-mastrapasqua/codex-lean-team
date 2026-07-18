@@ -14,24 +14,34 @@
 
 ## Default execution policy
 The root agent (Luna) implements tasks directly.
-Do not delegate, spawn subagents, or request a planning pass by default.
-Most tasks must be completed by the main agent alone.
+Do not delegate, spawn subagents, or request a planning pass for routine work.
+Most tasks are completed by the main agent alone, but non-routine tasks should
+use one focused specialist after Luna has done a short local inspection and can
+name the decision or failure mode where the specialist may change the outcome.
 
 ## Routing
 - **Clear or ordinary task** → Luna implements directly.
 - **Cross-module but clear** → Luna implements directly.
-- **Ambiguous architecture** → Luna inspects → delegate to Sol planner →
+- **Ambiguous architecture** → Luna inspects → delegate to Sol planner when
+  there are multiple viable designs or rollback/compatibility tradeoffs →
   Luna implements.
-- **Difficult bug** → Luna investigates first → delegate to Terra debugger
-  only if blocked → Luna fixes.
-- **High-risk implementation** → Luna implements → delegate to Sol reviewer.
+- **Difficult bug** → Luna reproduces or inspects first → delegate to Terra
+  debugger when the failure is cross-layer, intermittent, previously failed,
+  or has several plausible root causes → Luna fixes.
+- **Unfamiliar cross-cutting path** → Luna inspects → delegate one narrow
+  question to Terra explorer when local reading would duplicate broad context.
+- **High-risk implementation** → Luna implements → delegate to Sol reviewer
+  before completion.
 - **Performance with benchmark** → delegate to Terra performance specialist.
+- **AI/ML, infrastructure, deployment, CI/CD, cloud, containers** → delegate
+  to the matching Terra specialist when the task is materially in that domain.
 
 "Cross-module" is not a trigger. Multi-file changes are normal development.
 
 ## Delegation is an exception
-Allowed only when there is a concrete unresolved blocker that the main agent
-has already investigated.
+Allowed only when Luna has inspected enough context to ask a narrow question or
+identify a concrete decision, risk, or failure mode. A full blocker is not
+required for planning, debugging, domain-specialist, or high-risk review work.
 Do not delegate merely because:
 - the task touches multiple files or languages;
 - the task is described as non-trivial;
@@ -39,13 +49,14 @@ Do not delegate merely because:
 - an additional review could improve confidence.
 
 Before delegating, the main agent must be able to state:
-1. the specific unresolved question;
-2. why direct inspection or testing was insufficient;
+1. the specific question, decision, risk, or failure mode;
+2. what Luna already inspected or tested;
 3. the exact output required from the subagent.
 
 ## Agent budget
-Default subagent budget: 0.
-Ordinary task maximum: 1 subagent.
+Routine task subagent budget: 0.
+Non-routine task default budget: 1 focused subagent.
+Ordinary task maximum: 1 subagent only when a concrete narrow question emerges.
 High-risk task maximum: 2 subagents.
 Using more than 2 subagents requires explicit user instruction.
 
@@ -59,6 +70,9 @@ Do not create a written implementation plan unless:
 - the task requires an architectural decision with multiple viable options;
 - the task involves a destructive migration or difficult rollback;
 - requirements materially conflict.
+
+When one of these applies, use the Sol planner after a short repository scan
+instead of waiting until implementation is blocked.
 
 When a written plan is necessary:
 - maximum 6 steps;
