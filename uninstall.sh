@@ -27,6 +27,7 @@ rm -f "$CODEX_HOME/agents/lean-ai-ml.toml"
 rm -f "$CODEX_HOME/agents/lean-infrastructure.toml"
 rm -f "$CODEX_HOME/agents/lean-explorer.toml"
 rm -f "$CODEX_HOME/agents/lean-debugger.toml"
+rm -f "$CODEX_HOME/agents/lean-native.toml"
 rm -f "$BIN_HOME/codex-team"
 
 for skill in adaptive-routing focused-code-review root-cause-debugging measured-performance; do

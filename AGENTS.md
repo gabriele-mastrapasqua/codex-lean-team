@@ -3,45 +3,43 @@
 
 ## Model hierarchy
 - **Luna** (root): fastest, cheapest, for all direct implementation.
-  Reasoning effort: high.
-- **Terra** (specialist): moderate cost, for investigation and complex
-  subsystems. Reasoning effort: medium (debugger), high (ai-ml, infra,
-  performance).
-- **Sol** (high-value decisions): most expensive, for planning and review.
-  Reasoning effort: medium by default; escalate to high manually for
-  auth, security, memory safety, atomics, CUDA/Metal, data migrations,
-  or public API compatibility.
+  Reasoning effort: xhigh.
+- **Luna** (specialist): same economical model for focused work. Reasoning
+  effort: xhigh by default, max for debugger and native/unsafe code.
 
 ## Default execution policy
 The root agent (Luna) implements tasks directly.
 Do not delegate, spawn subagents, or request a planning pass for routine work.
-Most tasks are completed by the main agent alone, but non-routine tasks should
-use one focused specialist after Luna has done a short local inspection and can
-name the decision or failure mode where the specialist may change the outcome.
+Most tasks are completed by the main agent alone, but a task with concrete
+uncertainty or a specialist domain should use one focused, read-only specialist
+early. The root keeps ownership of edits and validation.
 
 ## Routing
 - **Clear or ordinary task** → Luna implements directly.
 - **Cross-module but clear** → Luna implements directly.
-- **Ambiguous architecture** → Luna inspects → delegate to Sol planner when
-  there are multiple viable designs or rollback/compatibility tradeoffs →
-  Luna implements.
-- **Difficult bug** → Luna reproduces or inspects first → delegate to Terra
-  debugger when the failure is cross-layer, intermittent, previously failed,
-  or has several plausible root causes → Luna fixes.
-- **Unfamiliar cross-cutting path** → Luna inspects → delegate one narrow
-  question to Terra explorer when local reading would duplicate broad context.
-- **High-risk implementation** → Luna implements → delegate to Sol reviewer
+- **Ambiguous architecture** → Luna inspects → delegate to Luna planner for
+  competing designs or rollback/compatibility tradeoffs → Luna implements.
+- **Difficult bug** → Luna reproduces or inspects → delegate to Luna debugger
+  at max for cross-layer, intermittent, previously failed, or
+  multi-hypothesis bugs → Luna fixes.
+- **Unfamiliar or cross-cutting path** → Luna delegates one narrow question to
+  Luna explorer as an early scout when it can quickly remove uncertainty.
+- **Native or unsafe code** → delegate to Luna native at max for C/C++, Rust,
+  SIMD, CUDA/Metal, memory ownership, atomics, or FFI boundaries.
+- **High-risk implementation** → Luna implements → delegate to Luna reviewer
   before completion.
-- **Performance with benchmark** → delegate to Terra performance specialist.
+- **Performance with benchmark** → delegate to Luna performance specialist.
 - **AI/ML, infrastructure, deployment, CI/CD, cloud, containers** → delegate
-  to the matching Terra specialist when the task is materially in that domain.
+  to the matching Luna specialist at xhigh when the task is materially in that
+  domain.
 
 "Cross-module" is not a trigger. Multi-file changes are normal development.
 
 ## Delegation is an exception
-Allowed only when Luna has inspected enough context to ask a narrow question or
-identify a concrete decision, risk, or failure mode. A full blocker is not
-required for planning, debugging, domain-specialist, or high-risk review work.
+Allowed when Luna can name a narrow question, concrete decision, risk, failure
+mode, or applicable specialist domain. A full blocker and a broad repository
+scan are not required: delegate early if a short evidence request is likely to
+change the next implementation step.
 Do not delegate merely because:
 - the task touches multiple files or languages;
 - the task is described as non-trivial;
@@ -55,9 +53,8 @@ Before delegating, the main agent must be able to state:
 
 ## Agent budget
 Routine task subagent budget: 0.
-Non-routine task default budget: 1 focused subagent.
-Ordinary task maximum: 1 subagent only when a concrete narrow question emerges.
-High-risk task maximum: 2 subagents.
+Tasks with concrete uncertainty or a specialist domain: 1 focused subagent.
+High-risk task maximum: 2 subagents for distinct risks or failure modes.
 Using more than 2 subagents requires explicit user instruction.
 
 Never spawn subagents in parallel for alternative opinions.
@@ -71,7 +68,7 @@ Do not create a written implementation plan unless:
 - the task involves a destructive migration or difficult rollback;
 - requirements materially conflict.
 
-When one of these applies, use the Sol planner after a short repository scan
+When one of these applies, use the Luna planner after a short repository scan
 instead of waiting until implementation is blocked.
 
 When a written plan is necessary:
@@ -86,7 +83,7 @@ Plans longer than 400 words are considered a failure.
 ## Review policy
 Do not request an independent review for normal bug fixes, small features,
 refactors, tests, documentation, or build changes.
-Use a reviewer (Sol medium) when the user explicitly requests a review, or
+Use a reviewer (Luna xhigh) when the user explicitly requests a review, or
 for:
 - authentication or authorization;
 - security boundaries or untrusted input;
@@ -97,7 +94,8 @@ for:
 - CUDA, Metal, SIMD, or memory ownership changes;
 - changes where tests cannot provide reasonable confidence.
 
-Escalate to Sol high for the most critical cases in the above categories.
+Keep review work at Luna xhigh; use Luna max only when it also involves the
+debugger or native/unsafe-code paths described above.
 
 A review must inspect the actual diff and report only concrete defects.
 Maximum 5 findings per review.

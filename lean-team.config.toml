@@ -1,6 +1,6 @@
 # Lean Team v2: execution-first, delegation as exception.
 model = "gpt-5.6-luna"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 
 sandbox_mode = "workspace-write"
 approval_policy = "on-request"

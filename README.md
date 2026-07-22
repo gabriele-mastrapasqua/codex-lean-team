@@ -16,14 +16,14 @@ Non-routine decision/risk ─> One focused specialist answers a narrow question
 Critical or requested review -> Reviewer inspects the actual diff
 ```
 
-The default root agent is **Luna with high reasoning** — the fastest and most economical model, reserved for high-volume coding work. It edits, runs tests, and delivers the result directly. Delegation is still an exception, but not a last resort: after a short local scan, Luna may call one focused specialist when that specialist is likely to change the plan, root cause, or risk assessment.
+The default root agent and everyday specialists use **Luna with xhigh reasoning** — the fastest and most economical model, reserved for high-volume coding work. Difficult debugging and native/unsafe work raise Luna to `max`. Delegation remains bounded, but is not a last resort: Luna may call one focused, read-only specialist as soon as it can state a narrow question, a concrete risk, or an applicable domain.
 
 This means routine work usually uses **one agent**, while difficult or high-risk work can still call a stronger specialist when needed.
 
 ## What happens in practice
 
 - Small fixes, features, refactors, tests, documentation, and build changes are handled directly.
-- A subagent is used only after the root agent finds a concrete question, decision, risk, or failure mode.
+- A subagent is used for a concrete question, decision, risk, failure mode, or specialist domain; it can be an early, targeted scout rather than a last-resort escalation.
 - At most one specialist handles a given question, risk, or failure mode; agents do not form chains.
 - The planner runs for real architecture, migration, rollback, or compatibility tradeoffs after a short scan.
 - The debugger runs for difficult, intermittent, cross-layer, previously failed, or multi-hypothesis bugs after Luna reproduces or inspects the issue.
@@ -31,22 +31,23 @@ This means routine work usually uses **one agent**, while difficult or high-risk
 - Specialists are read-only. The root agent keeps ownership of edits and validation.
 - Outputs are deliberately short: focused evidence, not broad reports.
 
-Using Luna as the default and reserving Terra/Sol for focused specialists substantially reduces token use and cost on routine tasks. Luna costs roughly 60% less than Terra and 80% less than Sol per token. Combined with the single-specialist cap, this means routine work uses one cheap agent and expensive models run only when they can change the outcome.
+Using Luna for both root work and focused specialists avoids model hops and keeps token cost predictable. `xhigh` covers explorer, planning, review, AI/ML, infrastructure, and measured-performance work; `max` is reserved for difficult debugging and native/unsafe code. Combined with the single-specialist cap, this gives uncertain tasks a quick second set of eyes without returning to multi-agent fan-out.
 
 ## Agents
 
 | Agent | Model | Reasoning | When it runs |
 |-------|-------|:---------:|---|
-| **Root developer** | Luna | high | Always. Implements, edits, and tests. |
-| `lean-explorer` | Terra | medium | One narrow question about an unfamiliar code path. |
-| `lean-debugger` | Terra | medium | Concrete failure unresolved after direct investigation. |
-| `lean-planner` | Sol | medium | Architecture, migrations, or conflicting requirements. |
-| `lean-reviewer` | Sol | medium | Explicit request, or security/concurrency/API/unsafe code. |
-| `lean-performance` | Terra | high | Reproducible benchmark or profile. |
-| `lean-ai-ml` | Terra | high | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, MLX. |
-| `lean-infrastructure` | Terra | high | CI/CD, containers, networking, cloud, observability, reliability. |
+| **Root developer** | Luna | xhigh | Always. Implements, edits, and tests. |
+| `lean-explorer` | Luna | xhigh | One narrow question about an unfamiliar code path. |
+| `lean-debugger` | Luna | max | Difficult, intermittent, cross-layer, or multi-hypothesis failures. |
+| `lean-native` | Luna | max | C/C++, Rust, SIMD, CUDA/Metal, FFI, ownership, or atomics. |
+| `lean-planner` | Luna | xhigh | Architecture, migrations, or conflicting requirements. |
+| `lean-reviewer` | Luna | xhigh | Explicit request, or security/concurrency/API/unsafe code. |
+| `lean-performance` | Luna | xhigh | Reproducible benchmark or profile. |
+| `lean-ai-ml` | Luna | xhigh | Inference, training, quantization, RAG, OCR, TTS, CUDA, Metal, MLX. |
+| `lean-infrastructure` | Luna | xhigh | CI/CD, containers, networking, cloud, observability, reliability. |
 
-Use Sol high manually for auth, security, memory safety, atomics, CUDA/Metal, data migrations, or public API compatibility.
+Use Luna max manually for auth, security, memory safety, atomics, CUDA/Metal, data migrations, or public API compatibility when xhigh is not enough.
 
 ## Guardrails against agent sprawl
 
@@ -57,8 +58,7 @@ max_depth = 1
 ```
 
 - Routine tasks have a subagent budget of zero.
-- Non-routine tasks default to one focused specialist after Luna's first scan.
-- Ordinary tasks may use at most one subagent only when a concrete narrow question emerges.
+- Concrete uncertainty or a specialist domain gets one focused, read-only specialist; it may run early as a targeted scout.
 - High-risk tasks may use at most two, only for distinct risks or failure modes.
 - `max_threads = 2` limits concurrent agent threads.
 - `max_depth = 1` prevents subagents from recursively creating teams.
@@ -95,7 +95,7 @@ Restart existing Codex sessions after installing so the new profile, agents, and
 ### Requirements
 
 - A recent Codex CLI with file-backed profiles, subagents, and skills
-- Access to `gpt-5.6-luna`, `gpt-5.6-terra`, and `gpt-5.6-sol`, or suitable replacements in the TOML files
+- Access to `gpt-5.6-luna`, or a suitable replacement in the TOML files
 - Bash on macOS or Linux
 
 ## What gets installed
